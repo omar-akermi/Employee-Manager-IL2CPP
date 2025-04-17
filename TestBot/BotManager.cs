@@ -17,6 +17,11 @@ namespace TestBot
     public class BotManager
     {
         private TestDialogue _dialogue;
+
+        public TestDialogue Dialogue
+        {
+            get { return _dialogue; }
+        }
         private GameObject _npcObject;
         private NPC _npc;
 
@@ -69,7 +74,7 @@ namespace TestBot
             _npc.MSGConversation = null;
             _npc.ConversationCategories = new Il2CppSystem.Collections.Generic.List<EConversationCategory>();
             _npc.dialogueHandler = null;
-            _npc.MugshotSprite = PlayerSingleton<ContactsApp>.Instance.AppIcon; 
+            _npc.MugshotSprite = PlayerSingleton<ContactsApp>.Instance.AppIcon;
 
 
             _npcObject.SetActive(true);
@@ -147,7 +152,7 @@ namespace TestBot
 
             foreach (var prop in allProps)
             {
-                                if (!prop.IsOwned || prop.PropertyName == null)
+                if (!prop.IsOwned || prop.PropertyName == null)
                     continue;
 
                 // 🔁 Load from per-property config
@@ -260,7 +265,7 @@ namespace TestBot
 
 
             // ✅ Close the gameplay menu (like dealer inventory behavior)
-           
+
         }
         private void ShowPayOptions()
         {
@@ -376,9 +381,9 @@ namespace TestBot
 
             // Hire employees
             AddHireOption("Hire Cleaner ($1,500)", 1500, "cleaner", prop, responses);
-            AddHireOption("Hire Botanist ($1,500)", 1500,"botanist", prop, responses);
-            AddHireOption("Hire Handler ($1,500)", 1500,"handler", prop, responses);
-            AddHireOption("Hire Chemist ($2,000)", 2000,"chemist", prop, responses);
+            AddHireOption("Hire Botanist ($1,500)", 1500, "botanist", prop, responses);
+            AddHireOption("Hire Handler ($1,500)", 1500, "handler", prop, responses);
+            AddHireOption("Hire Chemist ($2,000)", 2000, "chemist", prop, responses);
 
             //autotoggle payement
             string propKey = EmployeeConfigManager.Normalize(prop.PropertyName);

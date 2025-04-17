@@ -20,7 +20,7 @@ namespace TestBot
         private BotManager _botManager;
 
         private TimeManager _timeManager;
-        private int _lastProcessedDay = -1;
+        private int _elapsedDays = -1;
 
         public override void OnInitializeMelon()
         {
@@ -37,8 +37,7 @@ namespace TestBot
                 _timeManager = UnityEngine.Object.FindObjectOfType<TimeManager>();
                 if (_timeManager != null)
                 {
-                    _lastProcessedDay = _timeManager.DayIndex;
-                    MelonLogger.Msg($"[AutoPay] Initialized on day {_lastProcessedDay}");
+                    MelonCoroutines.Start(InitializeDay());
                 }
                 MelonCoroutines.Start(Initialize());
                 MelonCoroutines.Start(WaitForPropertyRestoreThenPatch());
@@ -52,6 +51,14 @@ namespace TestBot
 
             LoggerInstance.Msg("[Employee_Manager] BotManager...");
             _botManager = BotManager.Create(this);
+        }
+
+        private IEnumerator InitializeDay()
+        {
+            yield return BotManager.WaitForSystems();
+
+            _elapsedDays = _timeManager.ElapsedDays;
+            MelonLogger.Msg($"[AutoPay] Initialized on day {_elapsedDays}");
         }
 
         private IEnumerator WaitForPropertyRestoreThenPatch()
@@ -104,38 +111,42 @@ namespace TestBot
                 MelonLogger.Msg($"[✔] Patched {prop.PropertyName} → capacity: {prop.EmployeeCapacity}, idlePoints: {prop.EmployeeIdlePoints?.Length}");
             }
         }
-        private static string NormalizeName(string name)
-        {
-            return name?.Replace(" ", "").Trim().ToLowerInvariant();
-        }
+
         public override void OnUpdate()
         {
-            _timeManager ??= UnityEngine.Object.FindObjectOfType<TimeManager>();
-            if (_timeManager == null) return;
+            if (_timeManager == null || _elapsedDays == -1) return;
 
-            int currentDay = _timeManager.DayIndex;
-
-            if (currentDay != _lastProcessedDay)
+            int currentElapsedDay = _timeManager.ElapsedDays;
+            if (currentElapsedDay != _elapsedDays)
             {
-                _lastProcessedDay = currentDay;
-                MelonLogger.Msg($"[AutoPay] New day {currentDay} detected");
-
-                foreach (var prop in Il2CppScheduleOne.Property.Property.Properties)
+                if (_timeManager.CurrentTime > 700)
                 {
-                    if (EmployeeConfigManager.IsAutoPaymentEnabled(prop.PropertyName))
+                    MelonLogger.Msg($"[AutoPay] New day {currentElapsedDay} detected");
+                    _elapsedDays = currentElapsedDay;
+                    foreach (var prop in Il2CppScheduleOne.Property.Property.Properties)
                     {
-                        float due = SharedModUtils.WageUtils.GetTotalUnpaidWagesForProperty(prop);
-                        if (due > 0f && prop.Employees != null)
+                        if (EmployeeConfigManager.IsAutoPaymentEnabled(prop.PropertyName))
                         {
-                            SharedModUtils.WageUtils.TryPayAllUnpaidEmployees(prop.Employees, out _, out _);
-                            MelonLogger.Msg($"[AutoPay] Paid ${due} in {prop.PropertyName}");
+                            float due = SharedModUtils.WageUtils.GetTotalUnpaidWagesForProperty(prop);
+                            if (due > 0f && prop.Employees != null)
+                            {
+                                bool success = SharedModUtils.WageUtils.TryPayAllUnpaidEmployees(prop.Employees, out float totalCost, out string error);
+                                if (success)
+                                {
+                                    MelonLogger.Msg($"[AutoPay] Paid ${totalCost} in {prop.PropertyName}");
+                                    _botManager.Dialogue.SendNPCMessage($"[AutoPay] Paid ${totalCost} in {prop.PropertyName}");
+                                }
+                                else
+                                {
+                                    MelonLogger.Msg($"[AutoPay] Error: {error}");
+                                    _botManager.Dialogue.SendNPCMessage($"[AutoPay] {error} for {prop.PropertyName}");
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-
-
 
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {

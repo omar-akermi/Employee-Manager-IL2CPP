@@ -99,8 +99,8 @@ namespace SharedModUtils
 
             return true;
         }
-    
-    public static bool TryPayAllUnpaidEmployees(Il2CppSystem.Collections.Generic.List<Employee> employees, out float totalCost, out string error)
+
+        public static bool TryPayAllUnpaidEmployees(Il2CppSystem.Collections.Generic.List<Employee> employees, out float totalCost, out string error)
         {
             totalCost = 0f;
             error = null;
@@ -114,7 +114,7 @@ namespace SharedModUtils
             float balance = MoneyManager.instance.cashBalance;
             if (totalCost > balance)
             {
-                error = $"Insufficient funds: need ${totalCost}, have ${balance}";
+                error = $"Insufficient funds: need ${totalCost}, have ${(int) balance}";
                 return false;
             }
 
