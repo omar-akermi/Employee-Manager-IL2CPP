@@ -10,7 +10,7 @@ using SharedModUtils;
 using HarmonyLib;
 using Il2CppScheduleOne.GameTime; // If available
 
-[assembly: MelonInfo(typeof(TestBot.Mod), "Employee Manager", "1.6", "Akermi")]
+[assembly: MelonInfo(typeof(TestBot.Mod), "Employee Manager", "1.6.1", "Akermi")]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 namespace TestBot
